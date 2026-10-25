@@ -451,10 +451,15 @@ def test_pipeline_llm_abstain_marker_preserved(mock_config):
 @pytest.mark.parametrize(
     "question",
     [
+        "Explain it",
+        "Explain it.",
+        "Explain this",
         "Explain this.",
         "What is this?",
-        "How does it work?",
+        "What about it?",
+        "Tell me more about it",
         "Tell me about that.",
+        "How does it work?",
         "Explain the error.",
         "What does it mean?",
         "Compare them.",
@@ -478,8 +483,10 @@ def test_needs_clarification_should_clarify_list(question):
     "question",
     [
         "What is a Python list?",
+        "What is a Python function?",
         "What is a variable in Python?",
         "How does a Python for loop work?",
+        "How does exception handling work in Python?",
         "What is phishing?",
         "What is SQL injection?",
         "What does the len() function return?",
@@ -509,8 +516,16 @@ def test_needs_clarification_single_word():
     assert "python" in detail_topic.question.lower()
 
 
+def test_needs_clarification_with_current_turn_in_history():
+    """When history only contains the current user turn (as in Streamlit state), clarification still triggers."""
+    history = [{"role": "user", "content": "Explain it"}]
+    detail = needs_clarification("Explain it", history=history)
+    assert detail.needs_clarification is True
+    assert 'What does "it" refer to?' in detail.question
+
+
 def test_needs_clarification_with_history_deferred():
-    """When conversation history exists, dangling references are deferred to context resolution."""
+    """When genuine prior conversation history exists, dangling references are deferred to context resolution."""
     history = [{"role": "user", "content": "What is a list in Python?"}]
     detail = needs_clarification("How does it work?", history=history)
     assert detail.needs_clarification is False

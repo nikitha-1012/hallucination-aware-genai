@@ -62,11 +62,13 @@ GENERIC_QUERY_WORDS = {
     # Common prepositions & conjunctions
     "to", "for", "in", "on", "at", "of", "with", "from", "by", "about",
     "and", "or", "but", "so", "if",
-    # Generic action/inquiry verbs
+    # Generic action/inquiry verbs & qualifiers
     "explain", "tell", "describe", "mean", "means", "work", "works",
     "fix", "fixes", "happen", "happens", "do", "does", "done", "doing",
     "use", "uses", "show", "give", "help", "solve", "say", "says",
     "run", "runs", "see", "get", "make", "know", "detail", "details",
+    "more", "much", "some", "any", "all", "info", "information", "elaborate",
+    "bit", "further",
 }
 
 COMPARE_WORDS = {
@@ -212,6 +214,32 @@ def assess_evidence(
     return decision.category.value
 
 
+def _has_prior_history(question: str, history: Optional[list[Any]]) -> bool:
+    """Determine whether history contains conversation turns prior to the current question."""
+    if not history:
+        return False
+    clean_target = question.strip().lower()
+    prior: list[Any] = []
+    for item in history:
+        if isinstance(item, dict):
+            content = item.get("content", "").strip().lower()
+            role = item.get("role", "")
+            # Skip if this item is just the current question appended prior to execution
+            if content == clean_target and role == "user":
+                continue
+            prior.append(item)
+        elif isinstance(item, (list, tuple)) and len(item) == 2:
+            content = str(item[1]).strip().lower()
+            if content == clean_target:
+                continue
+            prior.append(item)
+        else:
+            if str(item).strip().lower() == clean_target:
+                continue
+            prior.append(item)
+    return len(prior) > 0
+
+
 def needs_clarification(
     question: str,
     history: Optional[list[Any]] = None,
@@ -258,8 +286,9 @@ def needs_clarification(
             question=f"Your question is too brief. Please ask a specific question about {clean_q.strip('?.!')}.",
         )
 
-    # If conversation history exists, dangling references may refer to earlier turns (handled in F10)
-    if history:
+    # If conversation history exists prior to this question, dangling references
+    # may refer to earlier turns (to be resolved by conversation context in F10).
+    if _has_prior_history(clean_q, history):
         return ClarificationDetail(needs_clarification=False)
 
     # 2. Compare / choose without naming subjects
