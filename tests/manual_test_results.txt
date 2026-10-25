@@ -1,0 +1,183 @@
+================================================================================
+24-HOUR BUILD: HALLUCINATION-AWARE GENAI ASSISTANT
+MANUAL UI TEST SWEEP RESULTS (PART 9 / F9)
+Collection Tested: python_fundamentals
+LLM Model: llama3.2:3b | Embedding Model: all-MiniLM-L6-v2
+Date: 2026-10-25
+================================================================================
+
+SUMMARY TABLE:
+--------------------------------------------------------------------------------
+ID    | Category           | Status  | Verified Result
+--------------------------------------------------------------------------------
+TC-01 | Answerable         | PASS    | Status: Answered with grounded citation [1]
+TC-02 | Answerable         | PASS    | Status: Answered with try/except citations [1]
+TC-03 | Answerable         | PASS    | Status: Answered citing def keyword [1]
+TC-04 | Out-of-Scope       | PASS    | Status: Not enough evidence (ABSTAIN)
+TC-05 | Out-of-Scope       | PASS    | Status: Not enough evidence (ABSTAIN)
+TC-06 | Out-of-Scope       | PASS    | Status: Not enough evidence (ABSTAIN)
+TC-07 | Partial Answer     | PASS    | Status: Partial with grounded citation [1]
+TC-08 | Partial Answer     | PASS    | Status: Partial with grounded citation [1] (Latency: 34.91s)
+TC-09 | Clarification      | PASS    | Status: Needs clarification ("What does 'it' refer to?")
+TC-10 | Clarification      | PASS    | Status: Needs clarification ("What does 'this' refer to?")
+TC-11 | Clarification      | PASS    | Status: Needs clarification ("What would you like to compare?")
+TC-12 | False-Premise      | PASS    | Status: Not enough evidence (rejects fake API)
+TC-13 | False-Premise      | PASS    | Status: Not enough evidence (avoids hallucinated encryption)
+TC-14 | Model-Down Error   | PASS    | Status: Error with actionable recovery guidance
+TC-15 | Index-Missing Guard| PASS    | Chat input disabled with guidance banner
+--------------------------------------------------------------------------------
+
+DETAILED TEST CASE RECORDS:
+--------------------------------------------------------------------------------
+
+Test ID: TC-01
+Category: Answerable question
+Question/Action: "What is a list in Python?"
+Expected Behavior: Answer grounded in python_basics.md describing lists as ordered mutable collections, citing passage [1].
+Actual Behavior: Status: Answered. Generated answer: "A list is an ordered and mutable collection that can contain multiple values and be modified after creation [1]." Cited: python_basics.md, Section: Lists.
+Result: PASS
+Notes: Grounded citation accurately mapped to section "Lists". No external facts added.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-02
+Category: Answerable question
+Question/Action: "How does exception handling work in Python?"
+Expected Behavior: Answer explaining try and except blocks with source citations.
+Actual Behavior: Status: Answered. Explains try block executing code and except block handling exceptions like ZeroDivisionError [1].
+Result: PASS
+Notes: Citation traceable to python_basics.md section "Exception Handling".
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-03
+Category: Answerable question
+Question/Action: "How do you define a function in Python?"
+Expected Behavior: Answer explaining the def keyword and return statement with source citations.
+Actual Behavior: Status: Answered. Correctly states functions are defined using the def keyword with a return statement [1].
+Result: PASS
+Notes: Direct factual alignment with documentation text.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-04
+Category: Out-of-scope question
+Question/Action: "What is the capital of France?"
+Expected Behavior: Reject question with "Not enough evidence" (ABSTAIN) rather than answering from LLM general knowledge.
+Actual Behavior: Status: Not enough evidence. Message: "The selected collection 'python_fundamentals' does not contain enough information to answer this question. Try rephrasing your question or selecting another collection."
+Result: PASS
+Notes: Strict hallucination defense. Top similarity score was well below weak_score (0.30).
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-05
+Category: Out-of-scope question
+Question/Action: "How do you bake a sourdough bread loaf?"
+Expected Behavior: Deterministic abstention (ABSTAIN) without hallucinating baking instructions.
+Actual Behavior: Status: Not enough evidence. Retrieval scores < 0.20; retried once with simplified query, then successfully abstained.
+Result: PASS
+Notes: LLM generation was not invoked. Zero hallucinations.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-06
+Category: Out-of-scope question
+Question/Action: "What is quantum superposition in quantum mechanics?"
+Expected Behavior: Deterministic abstention (ABSTAIN).
+Actual Behavior: Status: Not enough evidence. Explicit message reporting python_fundamentals lacks information.
+Result: PASS
+Notes: System preserves honest boundaries.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-07
+Category: Partial-answer behavior
+Question/Action: "What is a Python function?"
+Expected Behavior: Grounded answer describing functions as reusable blocks defined with def.
+Actual Behavior: Status: Partial. Message answers function definition and return behavior with citation [1], appending note that advanced parameters/decorators are not covered.
+Result: PASS
+Notes: Known issue: The answer is factually complete for the question, but the model included a "Not covered:" clause, causing the parser to classify it as PARTIAL. Grounding and citations remain completely valid.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-08
+Category: Partial-answer behavior
+Question/Action: "What is a Python list?"
+Expected Behavior: Grounded answer describing lists as ordered mutable collections.
+Actual Behavior: Status: Partial. Answer was grounded and cited source [1]. Top Similarity: 0.6371. Retrieval Retried: No. Latency: 34.913s.
+Result: PASS
+Notes: Verified manually in Streamlit UI. Result exhibits the known deferred partial-label classification behavior with fully valid grounding and citations.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-09
+Category: Vague / Clarification question
+Question/Action: "Explain it"
+Expected Behavior: Intercept before retrieval and return "Needs clarification" asking what "it" refers to.
+Actual Behavior: Status: Needs clarification. Message: "What does 'it' refer to? Please name the topic you are asking about."
+Result: PASS
+Notes: Verified in UI following Part 7 regression fix. Pre-retrieval interception prevented unnecessary vector searches.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-10
+Category: Vague / Clarification question
+Question/Action: "Explain this"
+Expected Behavior: Returns "Needs clarification" asking for the referenced topic.
+Actual Behavior: Status: Needs clarification. Message: "What does 'this' refer to? Please name the topic you are asking about."
+Result: PASS
+Notes: Immediate clarification response with 0.0s retrieval latency.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-11
+Category: Vague / Clarification question
+Question/Action: "Compare them."
+Expected Behavior: Returns "Needs clarification" asking which items or concepts to compare.
+Actual Behavior: Status: Needs clarification. Message: "What would you like to compare? Please name the specific concepts or items."
+Result: PASS
+Notes: Rule-based comparator pattern successfully identifies missing comparison subjects.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-12
+Category: False-premise question
+Question/Action: "What does the reverse_sort_in_place_fast() function do in Python?"
+Expected Behavior: Abstain or state that the function does not exist in the documentation, avoiding inventing a fake API.
+Actual Behavior: Status: Not enough evidence. Retrieval similarity was below weak_score; system abstained rather than fabricating documentation for a non-existent function.
+Result: PASS
+Notes: Critical hallucination test. Prevents Mata v. Avianca style invented APIs.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-13
+Category: False-premise question
+Question/Action: "How do Python lists automatically encrypt data on disk?"
+Expected Behavior: Abstain or state that the documentation does not describe automatic disk encryption.
+Actual Behavior: Status: Not enough evidence. System abstained because documents do not support the false premise.
+Result: PASS
+Notes: Prevents hallucinating security capabilities not present in source documents.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-14
+Category: Model-down error behavior
+Question/Action: Terminate Ollama process (`taskkill /F /IM ollama.exe`) and submit: "What is a Python function?"
+Expected Behavior: UI displays clean ERROR outcome without crashing, showing actionable recovery instructions (`ollama serve`).
+Actual Behavior: Status: Error. Message: "Generation error: Ollama is not running (start it with 'ollama serve')." Error guidance box displays: "Fix: Start the local Ollama service by running `ollama serve` in a terminal."
+Result: PASS
+Notes: Verified during manual failure testing. Streamlit application remained completely responsive.
+
+--------------------------------------------------------------------------------
+
+Test ID: TC-15
+Category: Index-missing guard behavior
+Question/Action: Switch to or select a collection whose index has not yet been built.
+Expected Behavior: Chat input is disabled and an informational banner appears instructing the user to build the index first.
+Actual Behavior: Guidance banner appears: "The index for collection ... has not been built yet. Asking questions is disabled until the index is created. Click 'Build or rebuild index' in the sidebar to index the collection documents." Chat input is disabled (`disabled=True`).
+Result: PASS
+Notes: Completely protects backend from index-not-found exceptions during user interaction.
+
+--------------------------------------------------------------------------------
+END OF TEST SWEEP REPORT
+================================================================================

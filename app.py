@@ -97,8 +97,8 @@ if st.sidebar.button("Build or rebuild index", use_container_width=True):
             )
             files_loaded = build_res.get("files_loaded", 0)
             files_failed = build_res.get("files_failed", 0)
-            chunks_indexed = build_res.get("chunks_indexed", 0)
-            duration = build_res.get("duration_seconds", 0.0)
+            chunks_indexed = build_res.get("chunks_created", build_res.get("indexed_records", 0))
+            duration = build_res.get("time_seconds", build_res.get("duration_seconds", 0.0))
 
             if chunks_indexed > 0:
                 st.sidebar.success(

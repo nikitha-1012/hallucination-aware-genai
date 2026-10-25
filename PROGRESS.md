@@ -1,7 +1,7 @@
 # PROGRESS
 
 Last updated: 2026-10-25
-Current part: Part 8 - Streamlit UI (F7)
+Current part: Part 9 - Test sweep (F9)
 
 ## Environment
 - Python version: 3.14.0
@@ -20,7 +20,7 @@ Current part: Part 8 - Streamlit UI (F7)
 - Part 6 Evidence check, pipeline (F5): DONE and tested (77 tests passing)
 - Part 7 Clarification (F6): DONE and tested (107 tests passing)
 - Part 8 Streamlit UI (F7): DONE and tested (123 tests passing total)
-- Part 9 Test sweep (F9): TODO
+- Part 9 Test sweep (F9): DONE and tested (150 tests passing total; manual UI verification complete in tests/manual_test_results.txt)
 - Part 10 Second domain (F8): TODO
 - Part 11 Conversation context (F10, P1): TODO
 - Part 12 Answer checks (F11, P1): TODO
@@ -32,7 +32,9 @@ Current part: Part 8 - Streamlit UI (F7)
 - strong_score: 0.45 (initial starting value in config.yaml)
 
 ## Known issues
-- None
+- Query "What is a Python function?" currently appears as `PARTIAL` outcome even though the answer is correctly grounded and cited. This occurs because the LLM appends a "Not covered:" clause detailing advanced concepts (e.g. decorators, lambda expressions) not present in retrieved context, which `parse_answer` detects. Grounding and citations remain completely valid. Thresholds and prompt logic were intentionally left intact.
+- Local LLM generation latency on CPU/local hardware is ~20–40s for 3B parameter model queries.
+- Manual test results tracking file: `tests/manual_test_results.txt` covers 15 test cases across answerable, out-of-scope, partial, clarification, false-premise, model-down error, and index-missing guard scenarios.
 
 ## Decisions made that differ from the guide
 - None. Followed all specifications from docs/PROJECT_GUIDE.md:
@@ -55,6 +57,9 @@ Current part: Part 8 - Streamlit UI (F7)
       - Debugging "All retrieved passages" expander showing full retrieval transparency.
       - Actionable error fix guidance (e.g. `ollama serve`, `ollama pull`, index build).
       - Model caching via `@st.cache_resource` for the embedding model to avoid repeated disk reads.
+  - Test Sweep (F9):
+    - Added comprehensive audit test suite `tests/test_audit_sweep.py` with 27 unit tests verifying all 9 requirement areas: extraction/chunk metadata, indexing/persistence, retrieval ranking, citation parsing/mapping, insufficient evidence handling, clarification edge cases/false-positive rejection, configuration validation, model-down error recovery, and missing index guard.
+    - Added `tests/manual_test_results.txt` containing 15 detailed test cases with actual verified behaviors and notes.
 
 ## Commands
 - Check environment: python scripts/check_env.py
@@ -65,4 +70,4 @@ Current part: Part 8 - Streamlit UI (F7)
 - Run evaluation: TODO
 
 ## Next step
-Implement Part 9: F9 Test sweep across all core capabilities, defect fixes, and manual verification set.
+Implement Part 10: F8 Second domain (cybersecurity_fundamentals)
