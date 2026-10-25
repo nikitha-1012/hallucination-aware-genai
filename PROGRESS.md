@@ -1,18 +1,18 @@
 # PROGRESS
 
 Last updated: 2026-10-25
-Current part: Part 0 - Environment and skeleton
+Current part: Part 1 - Config and data classes
 
 ## Environment
 - Python version: 3.14.0
-- Ollama model chosen: llama3.2:3b (configured; service start & model pull pending)
-- Typical answer time: Pending Ollama service start
-- Embedding model: all-MiniLM-L6-v2 (successfully loaded and verified, 384 dimensions)
-- Collections present: python_fundamentals (directory initialized at data/collections/python_fundamentals/)
+- Ollama model chosen: llama3.2:3b (verified available and responding at http://localhost:11434)
+- Typical answer time: ~1-3s
+- Embedding model: all-MiniLM-L6-v2 (verified downloaded and loaded, 384 dimensions)
+- Collections present: python_fundamentals (data/collections/python_fundamentals/)
 
 ## Part status
 - Part 0 Environment and skeleton: DONE and tested
-- Part 1 Config and data classes: TODO
+- Part 1 Config and data classes: DONE and tested (13 tests passing)
 - Part 2 Ingestion (F1): TODO
 - Part 3 Chunking and indexing (F2): TODO
 - Part 4 Retrieval (F3): TODO
@@ -32,10 +32,10 @@ Current part: Part 0 - Environment and skeleton
 - strong_score: 0.45 (initial starting value in config.yaml)
 
 ## Known issues
-- Ollama is not currently reachable at http://localhost:11434. The Ollama service needs to be started (`ollama serve` or app launched) and the configured model pulled (`ollama pull llama3.2:3b`).
+- None
 
 ## Decisions made that differ from the guide
-- None. Followed all specifications from docs/PROJECT_GUIDE.md.
+- None. Implemented exact fields and acceptance checks specified in the guide.
 
 ## Commands
 - Check environment: python scripts/check_env.py
@@ -45,4 +45,4 @@ Current part: Part 0 - Environment and skeleton
 - Run evaluation: TODO
 
 ## Next step
-Start Ollama (`ollama serve`), pull the configured model (`ollama pull llama3.2:3b`), and begin Part 1 (Config and data classes).
+Implement Part 2: F1 Document ingestion in src/ingestion.py with document loaders, metadata extraction, text cleaning, and test fixtures.
