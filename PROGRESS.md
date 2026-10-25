@@ -1,14 +1,16 @@
 # PROGRESS
 
 Last updated: 2026-10-25
-Current part: Part 9 - Test sweep (F9)
+Current part: Part 10 - Second domain (F8)
 
 ## Environment
 - Python version: 3.14.0
 - Ollama model chosen: llama3.2:3b (verified available and responding at http://localhost:11434)
 - Typical answer time: ~1-3s
 - Embedding model: all-MiniLM-L6-v2 (verified downloaded and loaded, 384 dimensions)
-- Collections present: python_fundamentals (data/collections/python_fundamentals/)
+- Collections present:
+  - python_fundamentals (data/collections/python_fundamentals/)
+  - cybersecurity_fundamentals (data/collections/cybersecurity_fundamentals/)
 
 ## Part status
 - Part 0 Environment and skeleton: DONE and tested
@@ -21,7 +23,7 @@ Current part: Part 9 - Test sweep (F9)
 - Part 7 Clarification (F6): DONE and tested (107 tests passing)
 - Part 8 Streamlit UI (F7): DONE and tested (123 tests passing total)
 - Part 9 Test sweep (F9): DONE and tested (150 tests passing total; manual UI verification complete in tests/manual_test_results.txt)
-- Part 10 Second domain (F8): TODO
+- Part 10 Second domain (F8): DONE and tested (163 tests passing total; clarification regression for "Explain it" resolved)
 - Part 11 Conversation context (F10, P1): TODO
 - Part 12 Answer checks (F11, P1): TODO
 - Part 13 Evaluation (F12, P1): TODO
@@ -60,14 +62,21 @@ Current part: Part 9 - Test sweep (F9)
   - Test Sweep (F9):
     - Added comprehensive audit test suite `tests/test_audit_sweep.py` with 27 unit tests verifying all 9 requirement areas: extraction/chunk metadata, indexing/persistence, retrieval ranking, citation parsing/mapping, insufficient evidence handling, clarification edge cases/false-positive rejection, configuration validation, model-down error recovery, and missing index guard.
     - Added `tests/manual_test_results.txt` containing 15 detailed test cases with actual verified behaviors and notes.
+  - Second Domain & Domain Independence (F8 / Part 10):
+    - Added `data/collections/cybersecurity_fundamentals/` containing 3 factual reference documents: `network_security.md`, `application_security.md`, and `cryptography_and_access_control.md`.
+    - Added `SOURCES.md` tracking licenses (Python PSF, NIST Public Domain, OWASP CC BY-SA 4.0).
+    - Built persistent vector index for `cybersecurity_fundamentals` (13 chunks created across 3 documents).
+    - Added `tests/test_domain_switching.py` (13 tests total) verifying document ingestion, chunking metadata, dual index coexistence, retrieval ranking, cross-domain abstention (Python on cyber, cyber on Python), pipeline execution with grounded citations, codebase domain independence, UI discovery, and cross-domain clarification interception.
+    - Resolved clarification regression: in `src/decision.py`, ensured ultra-brief dangling queries (<= 2 words with dangling pronoun, e.g. "Explain it") lack any concrete subject and deterministically trigger `CLARIFY` before retrieval across both collections regardless of prior session history. In `app.py`, bound `key="selected_collection_sidebar"` and ensured immediate chat reset upon switching collections.
+    - Zero domain-specific logic or answer branches added to generic core code.
 
 ## Commands
 - Check environment: python scripts/check_env.py
 - Run tests: pytest
-- Build index: python scripts/build_index.py [--collection python_fundamentals]
+- Build index: python scripts/build_index.py [--collection python_fundamentals | --collection cybersecurity_fundamentals]
 - Calibrate thresholds: python scripts/calibrate_thresholds.py [--collection python_fundamentals]
 - Run app: streamlit run app.py (verified running on http://localhost:8501)
 - Run evaluation: TODO
 
 ## Next step
-Implement Part 10: F8 Second domain (cybersecurity_fundamentals)
+Implement Part 11: F10 Basic conversation context (P1)

@@ -286,8 +286,24 @@ def needs_clarification(
             question=f"Your question is too brief. Please ask a specific question about {clean_q.strip('?.!')}.",
         )
 
-    # If conversation history exists prior to this question, dangling references
-    # may refer to earlier turns (to be resolved by conversation context in F10).
+    # 2. Ultra-brief dangling queries (<= 2 words with dangling pronoun, e.g. "Explain it", "Explain this")
+    # These lack any concrete topic and must ALWAYS trigger clarification, even if conversation history exists.
+    if len(tokens) <= 2:
+        found_pronouns = [w for w in tokens if w in DANGLING_PRONOUNS]
+        if found_pronouns:
+            concrete_words = [
+                w for w in tokens
+                if w not in GENERIC_QUERY_WORDS and w not in DANGLING_PRONOUNS
+            ]
+            if not concrete_words:
+                pronoun = found_pronouns[0]
+                return ClarificationDetail(
+                    needs_clarification=True,
+                    question=f'What does "{pronoun}" refer to? Please name the topic you are asking about.',
+                )
+
+    # If conversation history exists prior to this question, multi-word follow-up questions
+    # (e.g. "How does it work?") may refer to earlier turns to be resolved in F10.
     if _has_prior_history(clean_q, history):
         return ClarificationDetail(needs_clarification=False)
 

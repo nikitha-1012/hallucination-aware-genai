@@ -75,7 +75,15 @@ selected_collection = st.sidebar.selectbox(
     options=available_collections,
     index=default_idx,
     help="Target document collection used for grounding answers.",
+    key="selected_collection_sidebar",
 )
+
+# Reset chat immediately if collection switches
+if "active_collection" not in st.session_state:
+    st.session_state.active_collection = selected_collection
+elif st.session_state.active_collection != selected_collection:
+    st.session_state.active_collection = selected_collection
+    st.session_state.messages = []
 
 # 2. Index Status Inspection
 has_index = index_exists(selected_collection, config=config)
