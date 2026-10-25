@@ -1,7 +1,7 @@
 # PROGRESS
 
 Last updated: 2026-10-25
-Current part: Part 3 - Chunking and indexing (F2)
+Current part: Part 4 - Retrieval (F3)
 
 ## Environment
 - Python version: 3.14.0
@@ -14,8 +14,8 @@ Current part: Part 3 - Chunking and indexing (F2)
 - Part 0 Environment and skeleton: DONE and tested
 - Part 1 Config and data classes: DONE and tested (13 tests passing)
 - Part 2 Ingestion (F1): DONE and tested (22 tests passing)
-- Part 3 Chunking and indexing (F2): DONE and tested (32 tests passing total)
-- Part 4 Retrieval (F3): TODO
+- Part 3 Chunking and indexing (F2): DONE and tested (32 tests passing)
+- Part 4 Retrieval (F3): DONE and tested (42 tests passing total)
 - Part 5 Generation (F4): TODO
 - Part 6 Evidence check, pipeline (F5): TODO
 - Part 7 Clarification (F6): TODO
@@ -36,10 +36,11 @@ Current part: Part 3 - Chunking and indexing (F2)
 
 ## Decisions made that differ from the guide
 - None. Followed all specifications from docs/PROJECT_GUIDE.md:
-  - Natural boundary fallback hierarchy: paragraph (`\n\n`), sentence (`. `, `! `, `? `, `.\n`), space (` `), hard cut.
-  - Chroma collection rebuild deletes existing collection first to prevent duplicate chunks.
-  - Stored metadata preserves `source_file`, `collection`, `page`, and `section`.
-  - Chroma collection distance set to cosine (`metadata={"hnsw:space": "cosine"}`).
+  - Exact similarity conversion: `cosine_similarity = round(1.0 - cosine_distance, 4)`, clamped to `[-1.0, 1.0]`.
+  - Normal retrieval uses `config.top_k` (default: 5); retry retrieval uses `config.retry_top_k` (default: 8).
+  - Empty or whitespace query gracefully returns empty list `[]`.
+  - Non-existent index raises `IndexNotFoundError`; empty index raises `EmptyIndexError`.
+  - Request count clamped to `min(k, total_chunks)` to avoid database query errors.
 
 ## Commands
 - Check environment: python scripts/check_env.py
@@ -49,4 +50,4 @@ Current part: Part 3 - Chunking and indexing (F2)
 - Run evaluation: TODO
 
 ## Next step
-Implement Part 4: F3 Retrieval in src/retrieval.py (query embedding, cosine similarity calculation, top-k ranking, and tests).
+Implement Part 5: F4 Grounded Generation in src/llm.py (Ollama client with error handling) and src/generation.py (numbered evidence prompt construction, answer parsing, and citation extraction).
