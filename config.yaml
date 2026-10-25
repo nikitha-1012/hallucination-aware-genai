@@ -1,0 +1,25 @@
+# Project Configuration for Hallucination-Aware GenAI Assistant
+
+# Ingestion & Chunking
+chunk_size: 1000
+chunk_overlap: 150
+
+# Retrieval & Thresholds
+top_k: 5
+retry_top_k: 8
+strong_score: 0.45
+weak_score: 0.30
+
+# Embedding
+embedding_model: "all-MiniLM-L6-v2"
+
+# LLM / Generation
+llm_model: "llama3.2:3b"
+temperature: 0.1
+llm_timeout_seconds: 120
+ollama_base_url: "http://localhost:11434"
+
+# Directories
+data_dir: "data/collections"
+indexes_dir: "indexes"
+default_collection: "python_fundamentals"

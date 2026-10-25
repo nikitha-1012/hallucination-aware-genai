@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches and virtual environments
+.pytest_cache/
+.coverage
+htmlcov/
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Chroma vector database indexes
+indexes/
+
+# Evaluation run results
+eval/results/*.csv
+
+# Operating System files
+.DS_Store
+Thumbs.db
