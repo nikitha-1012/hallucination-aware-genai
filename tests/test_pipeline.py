@@ -14,6 +14,7 @@ from src.decision import (
     EvidenceDecision,
     assess_evidence,
     evaluate_evidence,
+    needs_clarification,
     simplify_query,
 )
 from src.models import (
@@ -440,3 +441,165 @@ def test_pipeline_llm_abstain_marker_preserved(mock_config):
     assert res.outcome == PipelineOutcome.ABSTAIN
     assert "does not contain enough information" in res.message
     assert res.citations == []
+
+
+# ---------------------------------------------------------------------------
+# Part 7 — Clarification Tests (F6)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Explain this.",
+        "What is this?",
+        "How does it work?",
+        "Tell me about that.",
+        "Explain the error.",
+        "What does it mean?",
+        "Compare them.",
+        "How do I fix it?",
+        "Why does it happen?",
+        "Which one is better?",
+        "Explain the first one.",
+        "Tell me about the previous one.",
+        "Explain the issue.",
+    ],
+)
+def test_needs_clarification_should_clarify_list(question):
+    """Vague queries missing necessary details must trigger clarification."""
+    detail = needs_clarification(question)
+    assert detail.needs_clarification is True
+    assert detail.question is not None
+    assert len(detail.question.strip()) > 0
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "What is a Python list?",
+        "What is a variable in Python?",
+        "How does a Python for loop work?",
+        "What is phishing?",
+        "What is SQL injection?",
+        "What does the len() function return?",
+        "How does a firewall work?",
+        "What is a dictionary in Python?",
+        "What is the difference between a list and a tuple in Python?",
+        "How do I fix the IndexError in my list?",
+        "Why is it important to handle exceptions in Python?",
+        "Does this function mutate a Python list?",
+    ],
+)
+def test_needs_clarification_should_not_clarify_list(question):
+    """Specific queries with concrete domain subjects must NOT trigger clarification."""
+    detail = needs_clarification(question)
+    assert detail.needs_clarification is False
+    assert detail.question is None
+
+
+def test_needs_clarification_single_word():
+    """Single word queries trigger clarification requesting more detail."""
+    detail = needs_clarification("Explain")
+    assert detail.needs_clarification is True
+    assert "too brief" in detail.question.lower()
+
+    detail_topic = needs_clarification("Python")
+    assert detail_topic.needs_clarification is True
+    assert "python" in detail_topic.question.lower()
+
+
+def test_needs_clarification_with_history_deferred():
+    """When conversation history exists, dangling references are deferred to context resolution."""
+    history = [{"role": "user", "content": "What is a list in Python?"}]
+    detail = needs_clarification("How does it work?", history=history)
+    assert detail.needs_clarification is False
+
+
+def test_pipeline_clarification_triggers_before_retrieval(mock_config):
+    """Ambiguous query returns CLARIFY before calling retrieval or LLM generation."""
+    retrieval_called = []
+    generation_called = []
+
+    def mock_retrieve(collection_name, query, k, is_retry, config):
+        retrieval_called.append(query)
+        return []
+
+    def mock_generate(question, chunks, config):
+        generation_called.append(question)
+        return GenerationResult(message="Should not be called", outcome=PipelineOutcome.ANSWER)
+
+    res = run_pipeline(
+        collection="python_fundamentals",
+        question="Explain this.",
+        config=mock_config,
+        retrieve_fn=mock_retrieve,
+        generate_fn=mock_generate,
+    )
+
+    # Retrieval and generation must NOT be called
+    assert len(retrieval_called) == 0
+    assert len(generation_called) == 0
+
+    assert res.outcome == PipelineOutcome.CLARIFY
+    assert "this" in res.message.lower()
+    assert res.citations == []
+    assert res.retrieved == []
+    assert res.top_score == 0.0
+    assert res.retried is False
+    assert res.latency_seconds >= 0.0
+    assert any("clarification" in w.lower() for w in res.warnings)
+
+
+def test_pipeline_generic_error_clarifies_before_retrieval(mock_config):
+    """Query referencing generic 'the error' triggers CLARIFY without retrieval."""
+    retrieval_called = []
+
+    def mock_retrieve(collection_name, query, k, is_retry, config):
+        retrieval_called.append(query)
+        return []
+
+    res = run_pipeline(
+        collection="python_fundamentals",
+        question="Explain the error.",
+        config=mock_config,
+        retrieve_fn=mock_retrieve,
+    )
+
+    assert len(retrieval_called) == 0
+    assert res.outcome == PipelineOutcome.CLARIFY
+    assert "error" in res.message.lower()
+    assert res.citations == []
+
+
+def test_pipeline_specific_question_does_not_clarify(mock_config):
+    """Specific question proceeds past clarification check into retrieval and generation."""
+    chunk = make_chunk("c1", 0.85)
+    retrieval_called = []
+    generation_called = []
+
+    def mock_retrieve(collection_name, query, k, is_retry, config):
+        retrieval_called.append(query)
+        return [chunk]
+
+    def mock_generate(question, chunks, config):
+        generation_called.append(question)
+        return GenerationResult(
+            message="A list is a mutable sequence [1].",
+            outcome=PipelineOutcome.ANSWER,
+            citations=[chunk],
+        )
+
+    res = run_pipeline(
+        collection="python_fundamentals",
+        question="What is a Python list?",
+        config=mock_config,
+        retrieve_fn=mock_retrieve,
+        generate_fn=mock_generate,
+    )
+
+    assert len(retrieval_called) == 1
+    assert len(generation_called) == 1
+    assert res.outcome == PipelineOutcome.ANSWER
+    assert len(res.citations) == 1
+

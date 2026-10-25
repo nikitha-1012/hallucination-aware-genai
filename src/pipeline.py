@@ -10,7 +10,7 @@ import time
 from typing import Any, Optional
 
 from src.config import AppConfig, load_config
-from src.decision import evaluate_evidence, simplify_query
+from src.decision import evaluate_evidence, needs_clarification, simplify_query
 from src.generation import generate_answer
 from src.llm import LLMError
 from src.models import GenerationResult, PipelineOutcome, PipelineResult, RetrievedChunk
@@ -29,13 +29,14 @@ def run_pipeline(
 
     Workflow:
     1. Validate query input (non-empty).
-    2. Retrieve top_k evidence chunks from vector storage.
-    3. Evaluate evidence deterministically against similarity thresholds.
-    4. If evidence is weak, retry once with a simplified query and retry_top_k.
-    5. Re-evaluate expanded evidence.
-    6. If evidence is sufficient (strong or moderate), generate grounded answer.
-    7. If evidence remains insufficient, abstain without invoking LLM.
-    8. Record full evidence traceability, citations, retry status, and latency.
+    2. Check rule-based clarification before retrieval; return CLARIFY immediately if needed.
+    3. Retrieve top_k evidence chunks from vector storage.
+    4. Evaluate evidence deterministically against similarity thresholds.
+    5. If evidence is weak, retry once with a simplified query and retry_top_k.
+    6. Re-evaluate expanded evidence.
+    7. If evidence is sufficient (strong or moderate), generate grounded answer.
+    8. If evidence remains insufficient, abstain without invoking LLM.
+    9. Record full evidence traceability, citations, retry status, and latency.
 
     Args:
         collection: Target document collection name.
@@ -70,7 +71,22 @@ def run_pipeline(
 
     clean_question = question.strip()
 
-    # 2. Perform initial retrieval
+    # 2. Rule-based clarification check (BEFORE retrieval)
+    clarification = needs_clarification(clean_question, history=history)
+    if clarification.needs_clarification:
+        elapsed = round(max(0.0, time.time() - start_time), 4)
+        return PipelineResult(
+            outcome=PipelineOutcome.CLARIFY,
+            message=clarification.question or "Please clarify your question.",
+            citations=[],
+            retrieved=[],
+            top_score=0.0,
+            retried=False,
+            warnings=["Question requires clarification: missing necessary detail."],
+            latency_seconds=elapsed,
+        )
+
+    # 3. Perform initial retrieval
     try:
         chunks = retriever(
             collection_name=collection,
