@@ -1,7 +1,7 @@
 # PROGRESS
 
 Last updated: 2026-10-25
-Current part: Part 1 - Config and data classes
+Current part: Part 3 - Chunking and indexing (F2)
 
 ## Environment
 - Python version: 3.14.0
@@ -13,8 +13,8 @@ Current part: Part 1 - Config and data classes
 ## Part status
 - Part 0 Environment and skeleton: DONE and tested
 - Part 1 Config and data classes: DONE and tested (13 tests passing)
-- Part 2 Ingestion (F1): TODO
-- Part 3 Chunking and indexing (F2): TODO
+- Part 2 Ingestion (F1): DONE and tested (22 tests passing)
+- Part 3 Chunking and indexing (F2): DONE and tested (32 tests passing total)
 - Part 4 Retrieval (F3): TODO
 - Part 5 Generation (F4): TODO
 - Part 6 Evidence check, pipeline (F5): TODO
@@ -35,14 +35,18 @@ Current part: Part 1 - Config and data classes
 - None
 
 ## Decisions made that differ from the guide
-- None. Implemented exact fields and acceptance checks specified in the guide.
+- None. Followed all specifications from docs/PROJECT_GUIDE.md:
+  - Natural boundary fallback hierarchy: paragraph (`\n\n`), sentence (`. `, `! `, `? `, `.\n`), space (` `), hard cut.
+  - Chroma collection rebuild deletes existing collection first to prevent duplicate chunks.
+  - Stored metadata preserves `source_file`, `collection`, `page`, and `section`.
+  - Chroma collection distance set to cosine (`metadata={"hnsw:space": "cosine"}`).
 
 ## Commands
 - Check environment: python scripts/check_env.py
 - Run tests: pytest
-- Build index: python scripts/build_index.py (skeleton in Part 0, fully built in Part 3)
+- Build index: python scripts/build_index.py [--collection python_fundamentals]
 - Run app: streamlit run app.py (to be built in Part 8)
 - Run evaluation: TODO
 
 ## Next step
-Implement Part 2: F1 Document ingestion in src/ingestion.py with document loaders, metadata extraction, text cleaning, and test fixtures.
+Implement Part 4: F3 Retrieval in src/retrieval.py (query embedding, cosine similarity calculation, top-k ranking, and tests).
