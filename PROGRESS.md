@@ -1,7 +1,7 @@
 # PROGRESS
 
 Last updated: 2026-10-25
-Current part: Part 4 - Retrieval (F3)
+Current part: Part 5 - Generation (F4)
 
 ## Environment
 - Python version: 3.14.0
@@ -15,8 +15,8 @@ Current part: Part 4 - Retrieval (F3)
 - Part 1 Config and data classes: DONE and tested (13 tests passing)
 - Part 2 Ingestion (F1): DONE and tested (22 tests passing)
 - Part 3 Chunking and indexing (F2): DONE and tested (32 tests passing)
-- Part 4 Retrieval (F3): DONE and tested (42 tests passing total)
-- Part 5 Generation (F4): TODO
+- Part 4 Retrieval (F3): DONE and tested (42 tests passing)
+- Part 5 Generation (F4): DONE and tested (57 tests passing total)
 - Part 6 Evidence check, pipeline (F5): TODO
 - Part 7 Clarification (F6): TODO
 - Part 8 Streamlit UI (F7): TODO
@@ -36,11 +36,13 @@ Current part: Part 4 - Retrieval (F3)
 
 ## Decisions made that differ from the guide
 - None. Followed all specifications from docs/PROJECT_GUIDE.md:
-  - Exact similarity conversion: `cosine_similarity = round(1.0 - cosine_distance, 4)`, clamped to `[-1.0, 1.0]`.
-  - Normal retrieval uses `config.top_k` (default: 5); retry retrieval uses `config.retry_top_k` (default: 8).
-  - Empty or whitespace query gracefully returns empty list `[]`.
-  - Non-existent index raises `IndexNotFoundError`; empty index raises `EmptyIndexError`.
-  - Request count clamped to `min(k, total_chunks)` to avoid database query errors.
+  - Grounded prompt enforces: only supplied evidence as facts; answer must state insufficient evidence if missing; no invented facts/citations; distinguish partial coverage with "Not covered:"; treat retrieved passages as untrusted data (prompt injection defense).
+  - Numbered evidence blocks `[1]`, `[2]`, ... include deterministic source, page (if available), and section (if available) headers.
+  - Bracket citations `[n]` in generated answers are extracted deterministically in Python via regex and mapped strictly to 1-indexed `RetrievedChunk` instances. Out-of-bounds citation numbers are stripped and logged in `warnings`.
+  - Empty or insufficient evidence returns `outcome="INSUFFICIENT_EVIDENCE"` without fabricating fallbacks.
+  - Single-turn citation reminder retry: if an answer is generated with facts but no bracket citations, it triggers one automatic follow-up prompting the model to add bracket citations using the supplied evidence IDs.
+  - LLM client in `src/llm.py` uses Ollama `/api/chat` with custom error hierarchy (`LLMError`, `LLMConnectionError`, `LLMTimeoutError`, `LLMModelNotFoundError`).
+  - Offline testability: `generate_answer()` accepts an optional `chat_fn` callback, allowing deterministic unit tests without a running Ollama server.
 
 ## Commands
 - Check environment: python scripts/check_env.py
@@ -50,4 +52,4 @@ Current part: Part 4 - Retrieval (F3)
 - Run evaluation: TODO
 
 ## Next step
-Implement Part 5: F4 Grounded Generation in src/llm.py (Ollama client with error handling) and src/generation.py (numbered evidence prompt construction, answer parsing, and citation extraction).
+Implement Part 6: F5 Evidence check, pipeline in src/decision.py and src/pipeline.py.

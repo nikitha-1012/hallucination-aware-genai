@@ -73,3 +73,14 @@ class PipelineResult:
     retried: bool = False
     warnings: list[str] = field(default_factory=list)
     latency_seconds: float = 0.0
+
+
+@dataclass
+class GenerationResult:
+    """Result of grounded generation produced by generation.py."""
+    message: str
+    outcome: PipelineOutcome | str
+    citations: list[RetrievedChunk] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    raw_response: str = ""
+    not_covered: Optional[str] = None
